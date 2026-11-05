@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>M3 fotógaléria – állomások és alagutak</title>
+<meta name="description" content="A felújított M3 metró mind a 20 állomásának és alagútjainak fotói a Wikimedia Commonsról, állomásonként csoportosítva.">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0b1220;--panel:#111a2c;--line:#25324d;--fg:#e8eef8;--mut:#93a1b8;--m3:#005ca5;--m3l:#2f8be0}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--fg);font-family:Inter,system-ui,sans-serif}
+a{color:var(--m3l)}
+.top{position:sticky;top:0;z-index:20;background:#0b1220f2;border-bottom:1px solid var(--line);backdrop-filter:blur(8px)}
+.in{max-width:1400px;margin:0 auto;padding:12px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.badge{width:36px;height:36px;border-radius:50%;border:3px solid #fff;display:grid;place-items:center;font-weight:800;background:var(--m3)}
+h1{font-size:18px;margin:0}.sub{color:var(--mut);font-size:12px}.sp{flex:1}
+.btn{color:#fff;text-decoration:none;font:700 12px Inter;padding:8px 11px;border-radius:9px;border:1px solid var(--line)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{background:none;border:0;color:var(--mut);font:700 12px Inter;padding:8px 12px;cursor:pointer}.seg .on{background:#1b3256;color:#fff}
+.chips{max-width:1400px;margin:0 auto;padding:0 16px 10px;display:flex;gap:6px;overflow-x:auto}
+.chip{flex:none;font:600 12px Inter;color:var(--mut);background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:5px 10px;text-decoration:none}
+main{max-width:1400px;margin:0 auto;padding:16px 16px 60px}
+section{scroll-margin-top:120px;margin-bottom:26px}
+section h2{font-size:20px;margin:0 0 4px;display:flex;gap:10px;align-items:baseline}
+section h2 small{color:var(--mut);font-size:12px;font-weight:600}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:6px;margin-top:10px}
+.ph{position:relative;border:0;padding:0;background:#141f33;border-radius:8px;overflow:hidden;cursor:zoom-in;aspect-ratio:4/3}
+.ph img{width:100%;height:100%;object-fit:cover;display:block}
+.ph span{position:absolute;left:4px;bottom:4px;background:#000b;color:#fff;font:600 10px Inter;padding:2px 5px;border-radius:4px}
+.skel{aspect-ratio:4/3;border-radius:8px;background:linear-gradient(90deg,#141f33,#1b2840,#141f33);background-size:200% 100%;animation:s 1.2s infinite}@keyframes s{to{background-position:-200% 0}}
+.none{color:var(--mut);font-size:13px}
+.more{font-size:12px;margin-top:6px}
+#lb{position:fixed;inset:0;z-index:50;background:#05080ff2;display:none;flex-direction:column;align-items:center;justify-content:center;padding:16px}
+#lb.on{display:flex}#lb img{max-width:100%;max-height:calc(100vh - 140px);border-radius:8px}
+#lb .m{color:var(--mut);font-size:13px;margin-top:10px;text-align:center;max-width:900px}
+#lb button{position:absolute;background:#ffffff18;border:0;color:#fff;font-size:30px;width:48px;height:60px;border-radius:10px;cursor:pointer}
+#lb .x{top:12px;right:12px;height:48px}#lb .p{left:10px;top:45%}#lb .n{right:10px;top:45%}
+footer{max-width:1400px;margin:0 auto;padding:0 16px 40px;color:var(--mut);font-size:12px}
+</style>
+</head>
+<body>
+<div class="top"><div class="in">
+  <div class="badge">3</div>
+  <div><h1>M3 fotógaléria</h1><div class="sub">A felújított állomások és az alagutak valódi fotói · Wikimedia Commons</div></div>
+  <div class="sp"></div>
+  <div class="seg" id="seg"><button data-k="uj" class="on">Felújítás után</button><button data-k="mind">Minden kép</button></div>
+  <a class="btn" href="allomasok.html">Régen és ma</a><a class="btn" href="./">🗺️ Élő térkép</a>
+</div><div class="chips" id="chips"></div></div>
+<main id="main"></main>
+<footer>A képek a <a href="https://commons.wikimedia.org/wiki/Category:Budapest_Metro_line_3" target="_blank" rel="noopener">Wikimedia Commons M3-as gyűjteményéből</a> töltődnek be; a szerző és a licenc a képre kattintva látható.</footer>
+<div id="lb"><button class="x">✕</button><button class="p">‹</button><img alt=""><div class="m"></div><button class="n">›</button></div>
+<script>
+"use strict";
+// állomás → Commons-kategória és a felújítás utáni újranyitás dátuma
+const ST = [
+ ["Újpest-központ","Újpest-központ metro station","2019-03-30"],["Újpest-városkapu","Újpest-városkapu metro station","2019-03-30"],
+ ["Gyöngyösi utca","Gyöngyösi utca metro station","2019-03-30"],["Forgách utca","Forgách utca metro station","2019-03-30"],
+ ["Göncz Árpád városközpont","Göncz Árpád városközpont metro station","2019-03-30"],["Dózsa György út","Dózsa György út metro station","2019-03-30"],
+ ["Lehel tér","Lehel tér metro station","2023-05-22"],["Nyugati pályaudvar","Nyugati pályaudvar metro station","2023-03-20"],
+ ["Arany János utca","Arany János utca metro station","2023-03-20"],["Deák Ferenc tér","Deák Ferenc tér M3 metro station","2023-01-23"],
+ ["Ferenciek tere","Ferenciek tere metro station","2023-01-23"],["Kálvin tér","Kálvin tér M3 metro station","2022-05-14"],
+ ["Corvin-negyed","Corvin-negyed metro station","2022-05-14"],["Semmelweis Klinikák","Semmelweis Klinikák metro station","2022-05-14"],
+ ["Nagyvárad tér","Nagyvárad tér metro station","2023-05-22"],["Népliget","Népliget metro station","2020-10-22"],
+ ["Ecseri út","Ecseri út metro station","2020-10-22"],["Pöttyös utca","Pöttyös utca metro station","2020-10-22"],
+ ["Határ út","Határ út metro station","2020-10-22"],["Kőbánya-Kispest","Kőbánya-Kispest metro station","2000-01-01"]
+];
+const TUNNEL_Q = ['M3 metró alagút','Budapest M3 metró között','M2-M3 metró összekötő alagút','M3 metró fordítóvágányok','kéreg alatti mélyvezetésű alagút M3','Budapest metro M3 tunnel'];
+const API = "https://commons.wikimedia.org/w/api.php";
+const esc = s => String(s||"").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const strip = h => { const d = document.createElement("div"); d.innerHTML = h || ""; return (d.textContent||"").trim(); };
+const slug = s => s.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"-");
+async function api(p){ const r = await fetch(API+"?"+new URLSearchParams(Object.assign({format:"json",origin:"*",formatversion:"2"},p))); return r.json(); }
+const II = {prop:"imageinfo", iiprop:"url|extmetadata|mime", iiurlwidth:"480", iiextmetadatafilter:"DateTimeOriginal|Artist|LicenseShortName|ImageDescription"};
+function conv(r){ return ((r.query&&r.query.pages)||[]).filter(p=>p.imageinfo&&/^image\/(jpeg|png|webp)/.test(p.imageinfo[0].mime||"")).map(p=>{const ii=p.imageinfo[0],m=ii.extmetadata||{}; const g=k=>strip((m[k]||{}).value);
+  const d=g("DateTimeOriginal"); return {t:p.title.replace(/^File:/,""), th:ii.thumburl, full:ii.url, page:ii.descriptionurl, d:/^\d{4}-\d\d-\d\d/.test(d)?d.slice(0,10):"", a:g("Artist").slice(0,80)||"ismeretlen", l:g("LicenseShortName")};}); }
+async function catFiles(cat, depth){
+  let out = [], cont = {};
+  do { const r = await api(Object.assign({action:"query",generator:"categorymembers",gcmtitle:"Category:"+cat,gcmtype:"file",gcmlimit:"200"},II,cont)); out = out.concat(conv(r)); cont = r.continue||null; } while (cont && out.length < 600);
+  if (depth>0){ const s = await api({action:"query",list:"categorymembers",cmtitle:"Category:"+cat,cmtype:"subcat",cmlimit:"30"});
+    const subs = (s.query.categorymembers||[]).map(c=>c.title.replace(/^Category:/,""));
+    for (const r of await Promise.all(subs.map(c=>catFiles(c,depth-1)))) out = out.concat(r); }
+  return out;
+}
+let mode = "uj"; const DATA = {};
+const main = document.getElementById("main"), chips = document.getElementById("chips");
+const SECTIONS = ST.map(s=>({name:s[0],cat:s[1],since:s[2]})).concat([{name:"Alagutak, fordítóvágányok, összekötő alagút",tunnel:true}]);
+SECTIONS.forEach((s,i)=>{ const id=slug(s.name); chips.insertAdjacentHTML("beforeend",`<a class="chip" href="#${id}">${esc(s.name)}</a>`);
+  main.insertAdjacentHTML("beforeend",`<section id="${id}" data-i="${i}"><h2>${esc(s.name)} <small></small></h2><div class="grid">${'<div class="skel"></div>'.repeat(4)}</div></section>`); });
+function render(i){ const s=SECTIONS[i], el=document.querySelector(`section[data-i="${i}"]`), all=DATA[i]||[];
+  const list = (s.tunnel||mode==="mind") ? all : all.filter(x=>x.d && x.d>=s.since);
+  el.querySelector("small").textContent = s.tunnel ? `${all.length} kép` : `${list.length} kép${mode==="uj"?" a felújítás után (újranyitás: "+s.since+")":""}`;
+  el.querySelector(".grid").innerHTML = list.length ? list.map((x,k)=>`<button class="ph" data-k="${k}"><img loading="lazy" src="${esc(x.th)}" alt="${esc(x.t)}"><span>${esc(x.d||"")}</span></button>`).join("") : '<div class="none">Nincs kép ebben a nézetben.</div>';
+  for (const b of el.querySelectorAll(".ph")) b.onclick = ()=>openLB(list,+b.dataset.k);
+}
+async function load(i){ const s=SECTIONS[i]; let f=[];
+  try { if (s.tunnel){ for (const r of await Promise.all(TUNNEL_Q.map(q=>api(Object.assign({action:"query",generator:"search",gsrsearch:q,gsrnamespace:"6",gsrlimit:"50"},II))))) f=f.concat(conv(r)); f=f.filter(x=>/alag|tunnel|között|fordító|összekötő|üzemi/i.test(x.t)); }
+        else f = await catFiles(s.cat, 2); } catch(e){}
+  const seen=new Set(); DATA[i]=f.filter(x=>!seen.has(x.t)&&seen.add(x.t)).sort((a,b)=>(b.d||"").localeCompare(a.d||"")); render(i); }
+const io = new IntersectionObserver(es=>{ for (const e of es) if (e.isIntersecting){ io.unobserve(e.target); load(+e.target.dataset.i); } },{rootMargin:"800px 0px"});
+for (const s of main.children) io.observe(s);
+document.getElementById("seg").onclick = e=>{ const b=e.target.closest("button"); if(!b) return; mode=b.dataset.k; for (const x of document.querySelectorAll("#seg button")) x.classList.toggle("on",x===b); for (const k in DATA) render(+k); };
+const lb=document.getElementById("lb"), li=lb.querySelector("img"), lm=lb.querySelector(".m"); let L=[],P=0;
+function show(){ const x=L[P]; li.src=x.th.replace(/\/480px-/,"/1600px-"); li.onerror=()=>{li.onerror=null; li.src=x.full;}; lm.innerHTML=`<b>${esc(x.t)}</b><br>${x.d?esc(x.d)+" · ":""}Szerző: ${esc(x.a)}${x.l?" · Licenc: "+esc(x.l):""} · <a href="${esc(x.page)}" target="_blank" rel="noopener">forrás ↗</a>`; }
+function openLB(l,k){ L=l; P=k; show(); lb.classList.add("on"); }
+lb.querySelector(".x").onclick=()=>lb.classList.remove("on");
+lb.querySelector(".p").onclick=()=>{P=(P-1+L.length)%L.length; show();}; lb.querySelector(".n").onclick=()=>{P=(P+1)%L.length; show();};
+document.addEventListener("keydown",e=>{ if(!lb.classList.contains("on")) return; if(e.key==="Escape") lb.classList.remove("on"); if(e.key==="ArrowLeft") lb.querySelector(".p").click(); if(e.key==="ArrowRight") lb.querySelector(".n").click(); });
+</script>
+</body>
+</html>
