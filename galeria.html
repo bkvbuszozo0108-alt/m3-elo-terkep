@@ -81,7 +81,14 @@ async function catFiles(cat, depth){
     for (const r of await Promise.all(subs.map(c=>catFiles(c,depth-1)))) out = out.concat(r); }
   return out;
 }
-let mode = "uj"; const DATA = {};
+let mode = "uj"; const DATA = {}; const SHOWN = {};
+// a Wikimedia a sok egyszerre kért bélyegképet visszadobja: egyszerre csak néhányat töltünk, hiba esetén újrapróbáljuk
+const Q = []; let active = 0;
+function queueImg(img){ Q.push({img, tries:0}); pump(); }
+function pump(){ while (active < 4 && Q.length){ const job = Q.shift(); active++; const img = job.img;
+  img.onload = ()=>{ active--; pump(); };
+  img.onerror = ()=>{ active--; if (job.tries++ < 4) setTimeout(()=>{ Q.push(job); pump(); }, 1500*job.tries); else pump(); };
+  img.src = img.dataset.src + (job.tries ? (img.dataset.src.includes("?")?"&":"?")+"r="+job.tries : ""); } }
 const main = document.getElementById("main"), chips = document.getElementById("chips");
 const SECTIONS = ST.map(s=>({name:s[0],cat:s[1],since:s[2]})).concat([{name:"Alagutak, fordítóvágányok, összekötő alagút",tunnel:true}]);
 SECTIONS.forEach((s,i)=>{ const id=slug(s.name); chips.insertAdjacentHTML("beforeend",`<a class="chip" href="#${id}">${esc(s.name)}</a>`);
@@ -89,8 +96,11 @@ SECTIONS.forEach((s,i)=>{ const id=slug(s.name); chips.insertAdjacentHTML("befor
 function render(i){ const s=SECTIONS[i], el=document.querySelector(`section[data-i="${i}"]`), all=DATA[i]||[];
   const list = (s.tunnel||mode==="mind") ? all : all.filter(x=>x.d && x.d>=s.since);
   el.querySelector("small").textContent = s.tunnel ? `${all.length} kép` : `${list.length} kép${mode==="uj"?" a felújítás után (újranyitás: "+s.since+")":""}`;
-  el.querySelector(".grid").innerHTML = list.length ? list.map((x,k)=>`<button class="ph" data-k="${k}"><img loading="lazy" src="${esc(x.th)}" alt="${esc(x.t)}"><span>${esc(x.d||"")}</span></button>`).join("") : '<div class="none">Nincs kép ebben a nézetben.</div>';
-  for (const b of el.querySelectorAll(".ph")) b.onclick = ()=>openLB(list,+b.dataset.k);
+  const lim = SHOWN[i] || 24;
+  el.querySelector(".grid").innerHTML = list.length ? list.slice(0,lim).map((x,k)=>`<button class="ph" data-k="${k}"><img loading="lazy" data-src="${esc(x.th)}" alt=""><span>${esc(x.d||"")}</span></button>`).join("") + (list.length>lim?`<button class="ph more-btn" style="cursor:pointer;color:#fff;font:700 14px Inter">+ ${list.length-lim} további kép</button>`:"") : '<div class="none">Nincs kép ebben a nézetben.</div>';
+  for (const b of el.querySelectorAll(".ph:not(.more-btn)")) b.onclick = ()=>openLB(list,+b.dataset.k);
+  const mb = el.querySelector(".more-btn"); if (mb) mb.onclick = ()=>{ SHOWN[i] = lim + 24; render(i); };
+  for (const img of el.querySelectorAll("img[data-src]")) queueImg(img);
 }
 async function load(i){ const s=SECTIONS[i]; let f=[];
   try { if (s.tunnel){ for (const r of await Promise.all(TUNNEL_Q.map(q=>api(Object.assign({action:"query",generator:"search",gsrsearch:q,gsrnamespace:"6",gsrlimit:"50"},II))))) f=f.concat(conv(r)); f=f.filter(x=>/alag|tunnel|között|fordító|összekötő|üzemi/i.test(x.t)); }
