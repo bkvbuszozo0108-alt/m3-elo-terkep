@@ -412,7 +412,8 @@ document.getElementById("tabSt").onclick = () => setTab("st");
 function renderStations() {
   const el = document.getElementById("slist");
   const scroll = el.scrollTop;
-  let h = '<label class="opt"><input type="checkbox" id="oldChk"' + (showOld ? " checked" : "") + "> Régi (eredeti) nevek a térképen</label>";
+  let h = '<a class="btn" style="margin:0 4px 10px;display:flex;justify-content:center" href="allomasok.html">📷 Állomások képekben – régen és ma</a>';
+  h += '<label class="opt"><input type="checkbox" id="oldChk"' + (showOld ? " checked" : "") + "> Régi (eredeti) nevek a térképen</label>";
   h += ST.map((st, i) => {
     const inf = STINFO[st.name] || {};
     let x = '<div class="st" data-i="' + i + '"><div class="nr">' + (i + 1) + '</div><div><div class="nm">' + escapeHtml(st.name) + "<small>" + (inf.o || "") + "</small></div>";
