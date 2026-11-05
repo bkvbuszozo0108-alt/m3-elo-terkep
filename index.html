@@ -63,6 +63,23 @@ footer{padding:10px 14px 12px;border-top:1px solid var(--line);font-size:11px;co
 .tlab{width:max-content;white-space:nowrap;transform:translate(-50%,-135%);font:700 12px Inter,sans-serif;padding:3px 7px;border-radius:7px;color:#fff;box-shadow:0 2px 8px #0006;pointer-events:auto;cursor:pointer}
 .tlab small{font-weight:600;opacity:.9;margin-left:4px}
 .leaflet-container{font-family:Inter,sans-serif}
+/* fülek és állomáslista */
+.tabs{display:flex;gap:6px;margin-top:12px}
+.tab{flex:1;background:var(--panel2);border:1px solid var(--line);color:var(--mut);font:700 12px Inter,sans-serif;padding:8px;border-radius:9px;cursor:pointer}
+.tab.on{color:#fff;border-color:var(--m3l);background:#1b3256}
+#slist{flex:1;overflow:auto;padding:10px 10px 4px;display:none}
+.opt{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--mut);padding:2px 4px 10px}
+.st{display:grid;grid-template-columns:22px 1fr;gap:10px;padding:10px;border-radius:12px;background:var(--panel2);border:1px solid var(--line);margin-bottom:8px;cursor:pointer}
+.st:hover{border-color:#3a4c72}
+.st .nr{width:22px;height:22px;border-radius:50%;border:3px solid var(--m3l);background:#fff;color:#0b2f55;font:800 10px Inter,sans-serif;display:grid;place-items:center}
+.st .nm small{color:var(--mut);font-weight:600;margin-left:6px}
+.old{display:inline-block;margin:4px 4px 0 0;padding:2px 7px;border-radius:6px;background:#2a2016;color:#f3c58a;font-size:11px;font-weight:600}
+.plan{display:inline-block;margin:4px 4px 0 0;padding:2px 7px;border-radius:6px;background:#1d2438;color:#9fb3d8;font-size:11px;font-weight:600;font-style:italic}
+.here{display:inline-block;margin:4px 4px 0 0;padding:2px 7px;border-radius:6px;font-size:11px;font-weight:700;color:#fff}
+.sec{color:var(--mut);font:700 11px Inter,sans-serif;text-transform:uppercase;letter-spacing:.6px;margin:12px 4px 6px}
+.leaflet-popup-content{font:13px/1.45 Inter,sans-serif;margin:12px 14px}
+.leaflet-popup-content h3{margin:0 0 4px;font-size:15px}
+.leaflet-popup-content .mut{color:#5b6678;font-size:12px}
 @media (max-width:780px){
   #app{flex-direction:column}
   aside{width:100%;height:44%;border-left:0;border-top:1px solid var(--line)}
@@ -89,7 +106,9 @@ footer{padding:10px 14px 12px;border-top:1px solid var(--line);font-size:11px;co
         <div class="stat"><b id="nDep">–</b><span>kocsiszínben</span></div>
         <div class="stat"><b id="nPl">–</b><span>játékos</span></div>
       </div>
+      <div class="tabs"><button class="tab on" id="tabTr">🚇 Metrók</button><button class="tab" id="tabSt">📍 Állomások (20)</button></div>
     </header>
+    <div id="slist"></div>
     <div id="list"><div class="empty">Várakozás az adatokra…</div></div>
     <footer>
       <span>Adatok: a játék szerveréről, másodpercenként kétszer · térkép: © OpenStreetMap</span>
@@ -126,6 +145,34 @@ const REAL = {
   "Népliget":[47.475555555,19.098611111],"Ecseri út":[47.471388888,19.11],"Pöttyös utca":[47.468611111,19.116944444],
   "Határ út":[47.464722222,19.126388888],"Kőbánya-Kispest":[47.463333333,19.149166666]
 };
+
+// ===== AZ ÁLLOMÁSOK TÖRTÉNETE (átadás, korábbi és tervezett nevek, főbb átszállások) =====
+const STINFO = {
+  "Újpest-központ": { o: "1990. december 14.", old: [["Újpest-Központ", "1990–2019", "nagy K-val"]], tr: "villamos 12, 14 · busz 104, 120, 196, 220", n: "Az északi végállomás; 2017–2019 között felújították." },
+  "Újpest-városkapu": { o: "1990. december 14.", old: [["Újpest-Városkapu", "1990–2019", "nagy V-vel"]], plan: ["Újpest vasútállomás (2017–2019 között felmerült, nem lett)"], tr: "vonat (Újpest vasútállomás) · Volánbusz" },
+  "Gyöngyösi utca": { o: "1990. december 14.", tr: "busz" },
+  "Forgách utca": { o: "1990. december 14.", tr: "busz" },
+  "Göncz Árpád városközpont": { o: "1984. november 5.", old: [["Árpád híd", "1984–2020"]], tr: "villamos 1, 1A · troli 79 · Volánbusz-pályaudvar", n: "1984 és 1990 között ez volt az északi végállomás." },
+  "Dózsa György út": { o: "1984. november 5.", tr: "troli 75, 79" },
+  "Lehel tér": { o: "1981. december 30.", old: [["Élmunkás tér", "1981–1990"]], tr: "villamos 14", n: "1981 és 1984 között ez volt az északi végállomás." },
+  "Nyugati pályaudvar": { o: "1981. december 30.", old: [["Marx tér", "1981–1992"]], tr: "vonat · villamos 4, 6 · troli 72, 73" },
+  "Arany János utca": { o: "1981. december 30.", tr: "busz 15, 115" },
+  "Deák Ferenc tér": { o: "1976. december 31.", tr: "metró M1, M2 · villamos 47, 49", n: "Az első, 1976-os szakasz északi vége." },
+  "Ferenciek tere": { o: "1976. december 31.", old: [["Felszabadulás tér", "1976–1990"]], tr: "busz 5, 7, 8E, 110, 112" },
+  "Kálvin tér": { o: "1976. december 31.", tr: "metró M4 · villamos 47, 49" },
+  "Corvin-negyed": { o: "1976. december 31.", old: [["Ferenc körút", "1976–2011"]], tr: "villamos 4, 6" },
+  "Semmelweis Klinikák": { o: "1976. december 31.", old: [["Klinikák", "1976–2022"]], n: "A 2022-es újranyitáskor kapta mai nevét." },
+  "Nagyvárad tér": { o: "1976. december 31.", tr: "villamos 24", n: "1976 és 1980 között ez volt a déli végállomás." },
+  "Népliget": { o: "1980. március 29.", plan: ["Könyves Kálmán körút (tervezett név)"], tr: "villamos 1 · Volánbusz (Népliget autóbusz-állomás)" },
+  "Ecseri út": { o: "1980. március 29.", tr: "busz" },
+  "Pöttyös utca": { o: "1980. március 29.", tr: "busz" },
+  "Határ út": { o: "1980. március 29.", tr: "villamos 42 · busz" },
+  "Kőbánya-Kispest": { o: "1980. március 29.", plan: ["Kőbánya-Kispest vasútállomás (tervezett átnevezés, nem lett)"], tr: "vonat · busz 200E (repülőtér)", n: "A déli végállomás; eredetileg a Vörös Csillag Traktorgyárnál tervezték." },
+};
+const SEGS = [["1976. dec. 31.", "Deák Ferenc tér – Nagyvárad tér"], ["1980. márc. 29.", "Nagyvárad tér – Kőbánya-Kispest"], ["1981. dec. 30.", "Deák Ferenc tér – Lehel tér"], ["1984. nov. 5.", "Lehel tér – Árpád híd"], ["1990. dec. 14.", "Árpád híd – Újpest-központ"]];
+let showOld = false;
+try { showOld = localStorage.getItem("m3old") === "1"; } catch (e) {}
+const origName = (n) => { const i = STINFO[n]; return i && i.old ? i.old[0][0] : n; };
 
 // ===== JÁTÉK → VALÓDI TÉRKÉP =====
 // szakaszonként (két szomszédos állomás között) hasonlósági leképezés: a két állomás pontosan a valódi helyére kerül,
@@ -186,11 +233,24 @@ for (let s = ST[0].s - 250; s <= ST[ST.length - 1].s + 250; s += 40) lineLL.push
 L.polyline(lineLL, { color: "#ffffff", weight: 11, opacity: 0.9, interactive: false }).addTo(map);
 L.polyline(lineLL, { color: "#005ca5", weight: 6, opacity: 1, interactive: false }).addTo(map);
 map.fitBounds(L.latLngBounds(lineLL).pad(0.06));
+function stPopup(st) {
+  const i = STINFO[st.name] || {};
+  let h = "<h3>Ⓜ3 " + escapeHtml(st.name) + "</h3><div class='mut'>Átadva: " + (i.o || "–") + "</div>";
+  if (i.old) h += "<div style='margin-top:6px'><b>Korábbi név:</b> " + i.old.map(o => escapeHtml(o[0]) + " (" + o[1] + (o[2] ? ", " + o[2] : "") + ")").join(", ") + "</div>";
+  if (i.plan) h += "<div style='margin-top:4px'><b>Tervezett név:</b> " + i.plan.map(escapeHtml).join(", ") + "</div>";
+  if (i.tr) h += "<div style='margin-top:4px'><b>Átszállás:</b> " + escapeHtml(i.tr) + "</div>";
+  if (i.n) h += "<div class='mut' style='margin-top:4px'>" + escapeHtml(i.n) + "</div>";
+  const here = trainsNear(st);
+  if (here) h += "<div style='margin-top:6px'>" + here + "</div>";
+  return h;
+}
 for (const st of ST) {
   const end = st === ST[0] || st === ST[ST.length - 1];
-  L.circleMarker(llAt(st.s, 0), { radius: end ? 7 : 5.5, color: "#005ca5", weight: 3, fillColor: "#fff", fillOpacity: 1 })
-    .bindTooltip(st.name, { permanent: true, direction: "right", offset: [8, 0], className: "stl" }).addTo(map);
+  st.mk = L.circleMarker(llAt(st.s, 0), { radius: end ? 7 : 5.5, color: "#005ca5", weight: 3, fillColor: "#fff", fillOpacity: 1 })
+    .bindTooltip(showOld ? origName(st.name) : st.name, { permanent: true, direction: "right", offset: [8, 0], className: "stl" })
+    .bindPopup(() => stPopup(st), { maxWidth: 280 }).addTo(map);
 }
+function applyOldNames() { for (const st of ST) st.mk.setTooltipContent(showOld ? origName(st.name) : st.name); }
 function stLabels() { document.getElementById("map").classList.toggle("hide-st", map.getZoom() < 13.25); }
 map.on("zoomend", stLabels); stLabels();
 
@@ -324,6 +384,52 @@ function renderList(force) {
   for (const row of el.querySelectorAll(".tr")) row.onclick = () => selectTrain(row.dataset.n);
 }
 function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+
+// ===== ÁLLOMÁSOK FÜL =====
+function trainsNear(st) {
+  const now = performance.now(); const out = [];
+  for (const t of trains.values()) {
+    const s = sNow(t, now), d = st.s - s;
+    if (Math.abs(d) < 190) out.push('<span class="here" style="background:' + colorOf(t) + '">' + escapeHtml(shortName(t.n)) + (t.dr ? " · ajtók nyitva" : " · itt") + "</span>");
+    else if (!t.k && d * t.dd > 0 && Math.abs(d) < 3000) {
+      const v = speedNow(t, now), sec = v > 0.5 ? Math.round(Math.abs(d) / v) : null;
+      out.push('<span class="here" style="background:' + colorOf(t) + '">' + escapeHtml(shortName(t.n)) + " · " + (sec != null ? (sec < 60 ? sec + " mp" : Math.round(sec / 60) + " perc") : fmtDist(Math.abs(d))) + "</span>");
+    }
+  }
+  return out.join("");
+}
+let tab = "tr";
+function setTab(k) {
+  tab = k;
+  document.getElementById("tabTr").classList.toggle("on", k === "tr");
+  document.getElementById("tabSt").classList.toggle("on", k === "st");
+  document.getElementById("list").style.display = k === "tr" ? "" : "none";
+  document.getElementById("slist").style.display = k === "st" ? "block" : "none";
+  if (k === "st") renderStations();
+}
+document.getElementById("tabTr").onclick = () => setTab("tr");
+document.getElementById("tabSt").onclick = () => setTab("st");
+function renderStations() {
+  const el = document.getElementById("slist");
+  const scroll = el.scrollTop;
+  let h = '<label class="opt"><input type="checkbox" id="oldChk"' + (showOld ? " checked" : "") + "> Régi (eredeti) nevek a térképen</label>";
+  h += ST.map((st, i) => {
+    const inf = STINFO[st.name] || {};
+    let x = '<div class="st" data-i="' + i + '"><div class="nr">' + (i + 1) + '</div><div><div class="nm">' + escapeHtml(st.name) + "<small>" + (inf.o || "") + "</small></div>";
+    if (inf.old) x += inf.old.map(o => '<span class="old">korábban: ' + escapeHtml(o[0]) + " · " + o[1] + "</span>").join("");
+    if (inf.plan) x += inf.plan.map(p => '<span class="plan">' + escapeHtml(p) + "</span>").join("");
+    if (inf.tr) x += '<div class="ds">' + escapeHtml(inf.tr) + "</div>";
+    x += trainsNear(st);
+    return x + "</div></div>";
+  }).join("");
+  h += '<div class="sec">A vonal építése</div>' + SEGS.map(s => '<div class="ds" style="padding:0 6px 4px"><b style="color:var(--fg)">' + s[0] + "</b> · " + s[1] + "</div>").join("");
+  h += '<div class="ds" style="padding:8px 6px 14px">Az állomások 2017 és 2023 között felújítás miatt szakaszosan zárva voltak.</div>';
+  el.innerHTML = h;
+  el.scrollTop = scroll;
+  document.getElementById("oldChk").onchange = (e) => { showOld = e.target.checked; try { localStorage.setItem("m3old", showOld ? "1" : "0"); } catch (er) {} applyOldNames(); };
+  for (const row of el.querySelectorAll(".st")) row.onclick = () => { const st = ST[+row.dataset.i]; map.setView(llAt(st.s, 0), Math.max(map.getZoom(), 15)); st.mk.openPopup(); };
+}
+setInterval(() => { if (tab === "st") renderStations(); }, 2000);
 
 // ===== ÉLŐ ADAT (Firebase, folyamatos adatfolyam) =====
 let es;
