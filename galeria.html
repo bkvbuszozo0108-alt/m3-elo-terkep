@@ -85,9 +85,9 @@ let mode = "uj"; const DATA = {}; const SHOWN = {};
 // a Wikimedia a sok egyszerre kért bélyegképet visszadobja: egyszerre csak néhányat töltünk, hiba esetén újrapróbáljuk
 const Q = []; let active = 0;
 function queueImg(img){ Q.push({img, tries:0}); pump(); }
-function pump(){ while (active < 4 && Q.length){ const job = Q.shift(); active++; const img = job.img;
-  img.onload = ()=>{ active--; pump(); };
-  img.onerror = ()=>{ active--; if (job.tries++ < 4) setTimeout(()=>{ Q.push(job); pump(); }, 1500*job.tries); else pump(); };
+function pump(){ while (active < 4 && Q.length){ const job = Q.shift(); const img = job.img; if (!img.isConnected) continue; active++; let done = false; const fin = ()=>{ if (!done){ done = true; active--; } }; setTimeout(()=>{ if (!done){ fin(); pump(); } }, 15000);
+  img.onload = ()=>{ fin(); pump(); };
+  img.onerror = ()=>{ fin(); if (job.tries++ < 4) setTimeout(()=>{ Q.push(job); pump(); }, 1500*job.tries); else pump(); };
   img.src = img.dataset.src + (job.tries ? (img.dataset.src.includes("?")?"&":"?")+"r="+job.tries : ""); } }
 const main = document.getElementById("main"), chips = document.getElementById("chips");
 const SECTIONS = ST.map(s=>({name:s[0],cat:s[1],since:s[2]})).concat([{name:"Alagutak, fordítóvágányok, összekötő alagút",tunnel:true}]);
@@ -97,7 +97,7 @@ function render(i){ const s=SECTIONS[i], el=document.querySelector(`section[data
   const list = (s.tunnel||mode==="mind") ? all : all.filter(x=>x.d && x.d>=s.since);
   el.querySelector("small").textContent = s.tunnel ? `${all.length} kép` : `${list.length} kép${mode==="uj"?" a felújítás után (újranyitás: "+s.since+")":""}`;
   const lim = SHOWN[i] || 24;
-  el.querySelector(".grid").innerHTML = list.length ? list.slice(0,lim).map((x,k)=>`<button class="ph" data-k="${k}"><img loading="lazy" data-src="${esc(x.th)}" alt=""><span>${esc(x.d||"")}</span></button>`).join("") + (list.length>lim?`<button class="ph more-btn" style="cursor:pointer;color:#fff;font:700 14px Inter">+ ${list.length-lim} további kép</button>`:"") : '<div class="none">Nincs kép ebben a nézetben.</div>';
+  el.querySelector(".grid").innerHTML = list.length ? list.slice(0,lim).map((x,k)=>`<button class="ph" data-k="${k}"><img data-src="${esc(x.th)}" alt=""><span>${esc(x.d||"")}</span></button>`).join("") + (list.length>lim?`<button class="ph more-btn" style="cursor:pointer;color:#fff;font:700 14px Inter">+ ${list.length-lim} további kép</button>`:"") : '<div class="none">Nincs kép ebben a nézetben.</div>';
   for (const b of el.querySelectorAll(".ph:not(.more-btn)")) b.onclick = ()=>openLB(list,+b.dataset.k);
   const mb = el.querySelector(".more-btn"); if (mb) mb.onclick = ()=>{ SHOWN[i] = lim + 24; render(i); };
   for (const img of el.querySelectorAll("img[data-src]")) queueImg(img);
